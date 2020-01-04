@@ -41,6 +41,7 @@
                     processData: false,//用于对data参数进行序列化处理 这里必须false
                     contentType: false, //必须*/
                     success: function (data) {
+                        document.getElementById('msg').innerHTML = "<h1>" + data + "</h1>";
                         console.log(data);
                     }
                 })
@@ -80,6 +81,13 @@
         </div>
     </div>
 </form>
+
+<br>
+<div style="width: 60%;height: 40%;margin: 0 auto;margin-top: 10px">
+    <h1 style="float: left">结果:</h1>
+    <div id="msg" style="float: left;margin-left: 50px;margin-top: 10px"><h5></h5></div>
+</div>
+
 
 </body>
 </html>

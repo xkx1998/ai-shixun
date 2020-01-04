@@ -127,7 +127,6 @@ public class Byte2File extends ByteToMessageCodec<String> {
 
             String path = file.getPath();
             System.out.println("图片存储文件名：" + path);
-
             return path;
         } catch (Exception e) {
             e.printStackTrace();

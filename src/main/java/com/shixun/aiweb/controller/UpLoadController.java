@@ -9,6 +9,8 @@ import com.shixun.aiweb.service.impl.BasicGeneralServiceImpl;
 import com.shixun.aiweb.service.impl.IdCardServiceImpl;
 import com.shixun.aiweb.service.impl.PlateLicenseServiceImpl;
 import com.shixun.aiweb.service.impl.ReceiptServiceImpl;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,6 +37,7 @@ public class UpLoadController {
     public static final String SECRET_KEY = "l2gjFmGcxgnUUw6WIBQIGUVQkEqqnGNM";
 
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
     @GetMapping("/index")
     public String index() {
         return "index";
@@ -45,6 +48,7 @@ public class UpLoadController {
     public String carFileUpload(RedirectAttributes redirectAttributes, @RequestParam("file") MultipartFile srcFile,
                                 @RequestParam("type") String type) {
         String imgUrl = "";
+        String processResult = "";
         //选择了文件，开始进行上传操作
         try {
             String fileName = srcFile.getOriginalFilename();
@@ -84,25 +88,59 @@ public class UpLoadController {
             client.setSocketTimeoutInMillis(60000);
 
             BasicGeneralService basicGeneralService = new BasicGeneralServiceImpl(client);
+            String result = "";
             if (type.equals("1")) {
                 PlateLicenseService plateLicenseService = new PlateLicenseServiceImpl(client);
                 System.out.println("车牌识别开始...");
-                plateLicenseService.recognize(imgUrl);
+                result = processCarJson(plateLicenseService.recognize(imgUrl));
             } else if (type.equals("2")) {
                 IdCardService idCardService = new IdCardServiceImpl(client);
                 System.out.println("身份证识别开始...");
-                idCardService.recognize(imgUrl);
+                result = processIdJson(idCardService.recognize(imgUrl));
             } else if (type.equals("3")) {
                 System.out.println("文字识别开始...");
-                basicGeneralService.recognize(imgUrl);
+                result = processBillJson(basicGeneralService.recognize(imgUrl));
+
             } else {
                 ReceiptService receiptService = new ReceiptServiceImpl(client);
                 System.out.println("发票识别开始...");
-                receiptService.recognize(imgUrl);
+                result = processBillJson(receiptService.recognize(imgUrl));
             }
+            processResult = result;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return imgUrl;
+        return processResult;
+    }
+
+    public String processIdJson(String str) {
+        JSONObject jsonObject = new JSONObject(str);
+        String expirationDate = (String) jsonObject.getJSONObject("words_result").getJSONObject("失效日期").get("words");
+        String organization = (String) jsonObject.getJSONObject("words_result").getJSONObject("签发机关").get("words");
+        String issueDate = (String) jsonObject.getJSONObject("words_result").getJSONObject("签发日期").get("words");
+        String result = "失效日期：" + expirationDate + ", 签发机关 ：" + organization + ", 签发日期 ：" + issueDate;
+        return result;
+    }
+
+    public String processCarJson(String str) {
+        JSONObject jsonObject = new JSONObject(str);
+        JSONArray jsonArray = jsonObject.getJSONArray("words_result");
+        StringBuffer stringBuffer = new StringBuffer();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject index = jsonArray.getJSONObject(i);
+            stringBuffer.append(i + 1 + "：" + index.get("number") + " , ");
+        }
+        return stringBuffer.toString();
+    }
+
+    public String processBillJson(String str) {
+        JSONObject jsonObject = new JSONObject(str);
+        JSONArray jsonArray = jsonObject.getJSONArray("words_result");
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject index = jsonArray.getJSONObject(i);
+            sb.append(index.get("words") + " , ");
+        }
+        return sb.toString();
     }
 }
