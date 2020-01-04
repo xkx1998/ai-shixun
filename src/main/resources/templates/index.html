@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/4.0.0/css/bootstrap.css}" rel="stylesheet">
+    <script src="/webjars/jquery/3.0.0/jquery.js"></script>
+    <script src="/webjars/bootstrap/4.0.0/js/bootstrap.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#file').on('change', function () {
+                var filePath = $(this).val();         //获取到input的value，里面是文件的路径
+                var fileFormat = filePath.substring(filePath.lastIndexOf(".")).toLowerCase();
+                // 检查是否是图片
+                if (!fileFormat.match(/.png|.jpg|.jpeg/)) {
+                    error_prompt_alert('上传错误,文件格式必须为：png/jpg/jpeg');
+                    return;
+                }
+                var src = window.URL.createObjectURL(this.files[0]); //转成可以在本地预览的格式
+                $('#cropedBigImg').attr('src', src);
+            });
+
+            $("button").click(function () {
+                var type = $('#selectType option:selected').val();
+                if (type === undefined) {
+                    alert("请选择识别类型！")
+                    return false
+                }
+                var url = "/upload";
+                var formData = new FormData();
+                var file = document.getElementById('file').files[0];
+                if (file === undefined) {
+                    alert("请选择图片！");
+                    return false
+                }
+                formData.append("file", file);
+                formData.append("type", type);
+                $.ajax({
+                    url: url,
+                    type: "post",
+                    data: formData,
+                    cache: false,//上传文件无需缓存
+                    processData: false,//用于对data参数进行序列化处理 这里必须false
+                    contentType: false, //必须*/
+                    success: function (data) {
+                        console.log(data);
+                    }
+                })
+            });
+        });
+    </script>
+    <meta charset="UTF-8">
+    <title>AI识别</title>
+</head>
+<body style="text-align: center;margin: 0 auto">
+<center>
+    <h1 th:text="AI识别"/>
+</center>
+<form>
+    <div class="form-group">
+        <div style="width: 60%;height: 40%;margin: 0 auto;padding: 25px 50px;margin-top: 20px">
+            <img id="cropedBigImg" width="500" data-address='' style="line-height: 100%"/>
+        </div>
+        <div class="col-sm-4" style="text-align: center;margin: 0 auto">
+            <input type="file" class="form-control-file" id="file">
+        </div>
+    </div>
+    <div class="form-group mb-2">
+        <div class="col-sm-4" style="text-align: center;margin: 0 auto">
+            <label for="selectType">识别类型</label>
+            <select class="form-control" id="selectType">
+                <option value="1">车牌识别</option>
+                <option value="2">身份证识别</option>
+                <option value="3">文字识别</option>
+                <option value="4">发票识别</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-12">
+            <button type="button" class="btn btn-primary">识别</button>
+        </div>
+    </div>
+</form>
+
+</body>
+</html>
